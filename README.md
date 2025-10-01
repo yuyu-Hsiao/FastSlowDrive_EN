@@ -1,104 +1,107 @@
 # FastSlowDrive
 
-本專案是一套整合多種模組的智慧自駕系統，具備以下功能：
-- 車輛與行人偵測與追蹤（YOLOv10 + ByteTrack）
-- 車道線偵測與偏移控制（UFLD_v2 + PID 控制）
-- 危險行為辨識（Social LSTM 軌跡分析 + ROI預警區域）
-- 語意駕駛建議生成（OpenAI GPT4o）
-- 支援 CARLA 模擬平台進行場景測試
+This project is an integrated intelligent self-driving system with the following capabilities:  
+- Vehicle and pedestrian detection & tracking (YOLOv10 + ByteTrack)  
+- Lane detection & offset control (UFLD_v2 + PID control)  
+- Hazardous behavior recognition (Social-LSTM trajectory analysis + ROI warning zones)  
+- Semantic driving suggestion generation (OpenAI GPT-4o)  
+- Support for scenario testing on the CARLA simulator  
 
-## 📌 系統架構
+---
+
+## 📌 System Architecture
 <p align="center">
-  <img src="pic/流程圖v5.jpg" alt="系統流程圖" width="75%">
+  <img src="pic/流程圖v5.jpg" alt="System Architecture" width="75%">
 </p>
 
-本系統架構劃分為兩個主要子系統，分別負責感知控制與語意判斷：
+The system is divided into two main subsystems: **perception/control** and **semantic reasoning**.
 
-- **System 1：感知與基本控制模組**
-  - 接收來自模擬環境的即時影像，執行：
-    - `Object Detection` + `Multiple Object Tracking`（YOLOv10 + ByteTrack）
-    - `Lane Detection`（UFLD_v2 車道線偵測）
-    - `Behavior Classification`（Social-LSTM 軌跡分析 + 危險區域判定）
-  - 若未偵測到潛在風險，系統輸出 `Basic Control Code`，控制模擬車輛執行常規駕駛任務。
+- **System 1: Perception and Basic Control Module**  
+  - Receives real-time images from the simulation environment and performs:  
+    - `Object Detection` + `Multiple Object Tracking` (YOLOv10 + ByteTrack)  
+    - `Lane Detection` (UFLD_v2)  
+    - `Behavior Classification` (Social-LSTM trajectory analysis + hazard zone estimation)  
+  - If no potential risks are detected, the system outputs `Basic Control Code` to execute routine driving tasks.  
 
-- **System 2：語意推理與進階控制模組**
-  - 若行為分類結果顯示存在風險，或接收到使用者指令，將啟動 `LLM`（大型語言模型）。
-  - LLM 模型接收影像後產生具語意的風險判斷與駕駛建議，經由 `UI` 顯示並轉換為 `Advanced Control Code`，送至模擬環境執行控制行為。
+- **System 2: Semantic Reasoning and Advanced Control Module**  
+  - Activated when risky behavior is detected or when a user command is received.  
+  - The `LLM` (Large Language Model) generates semantic risk assessments and driving suggestions, which are displayed via the `UI` and converted into `Advanced Control Code` to control the vehicle in simulation.  
 
-> 本架構結合 rule-based 與 LLM-based 控制策略，在保障安全性的同時引入語意理解能力。
+> This architecture combines rule-based and LLM-based control strategies, ensuring safety while introducing semantic understanding capabilities.  
 
+---
 
-## 📌 運作流程
+## 📌 Workflow
 <p align="center">
-  <img src="pic/flow_chart_v2.jpg" alt="系統流程圖" width="75%">
+  <img src="pic/flow_chart_v2.jpg" alt="Workflow" width="75%">
 </p>
 
-1. **輸入影像** 同時進入：
-   - `MOT`（多目標追蹤）與 `Behavior Classification`（行為分類）
-   - `Lane Detection`（車道線偵測）
+1. **Input images** are processed by:  
+   - `MOT` (Multi-Object Tracking) and `Behavior Classification`  
+   - `Lane Detection`  
 
-2. 系統判斷是否偵測到：
-   - 危險行為（根據軌跡分類）
-   - 或使用者下達控制指令
+2. The system checks for:  
+   - Hazardous behaviors (via trajectory classification)  
+   - Or user-issued commands  
 
-3. 若為「Yes」：
-   - 啟動 `LLM Suggestions`，由語言模型輸出場景分析與控制建議
-   - 控制策略改為使用 `Advanced Control Code`
+3. If **Yes**:  
+   - `LLM Suggestions` are triggered to provide semantic analysis and control recommendations  
+   - Control strategy switches to `Advanced Control Code`  
 
-4. 若為「No」：
-   - 系統執行 `Basic Control Code`
+4. If **No**:  
+   - The system executes `Basic Control Code`  
 
-5. 所有控制邏輯皆最終傳遞給模擬器進行行車操作。
+5. All control logic is ultimately sent to the simulator to perform driving operations.  
 
-> 該流程平衡了即時性與語意能力，在風險場景中展現語言模型輔助決策的潛力。
+> This workflow balances **real-time responsiveness** with **semantic reasoning**, showcasing the potential of LLM-assisted decision-making in risk scenarios.  
 
+---
 
+## 🔧 Project Structure
 
+| File / Folder        | Description |
+|----------------------|-------------|
+| `main.py`            | Main entry: integrates perception, tracking, control, and LLM trigger |
+| `gui_app.py`         | Interactive UI (optional) |
+| `autopilot_fun/perception.py`     | Perception module: multi-object tracking + lane detection |
+| `autopilot_fun/utils.py`          | Utility functions: screen capture, hazard zone estimation, timers, etc. |
+| `autopilot_fun/visualization.py`  | Visualization: trajectory rendering, lane lines, hazard zones |
+| `autopilot_fun/control.py`        | Control module: PID controller, obstacle avoidance, lane keeping |
+| `autopilot_fun/integration.py`    | GPT integration: prompt design, API calls, and response handling |
+| `TrajectoryClassification/social_lstm_trainer.py` | Behavior classification: Social-LSTM trajectory analysis |
+| `UFLD`               | Lane detection module |  
 
+---
 
+## ⚙️ Requirements
 
-## 🔧 專案目錄結構
+- Python >= 3.7  
+- [YOLOv10](https://github.com/ultralytics/ultralytics)  
+- [UFLD_v2 Lane Detection](https://github.com/cfzd/Ultra-Fast-Lane-Detection-v2)  
+- OpenAI API Key  
+- [CARLA Simulator](https://carla.org/) version 0.9.13  
+- Other dependencies listed in `requirements.txt`  
 
-| 檔案 / 資料夾        | 功能說明 |
-|---------------------|----------|
-| `main.py`        | 系統主程式：整合感知、追蹤、控制、LLM 觸發 |
-| `gui_app.py`        | 互動式 UI（選用） |
-| `autopilot_fun/perception.py`     | 感知模組：多物件追蹤 + 車道線偵測 |
-| `autopilot_fun/utils.py`          | 輔助函式：視窗截圖、危險區域推估、計時器等 |
-| `autopilot_fun/visualization.py`  | 畫面渲染：軌跡繪製、車道線、風險區域顯示 |
-| `autopilot_fun/control.py`        | 控制模組：PID 控制器、避障邏輯、車道維持 |
-| `autopilot_fun/integration.py`    | GPT 模型整合：提示詞設計、API 呼叫與回應處理 |
-| `TrajectoryClassification/social_lstm_trainer.py` | 行為分類：Social-LSTM 模型進行軌跡分析 |
-| `UFLD` | 車道線偵測 |
+---
 
+## 🚀 Usage
 
+### 1. Start CARLA Simulator
+Refer to the detailed setup guide here: [CARLA README](CARLA/README.md)  
 
+### 2. Run the main program
 
-
-- Python >= 3.7
-- [YOLOv10](https://github.com/ultralytics/ultralytics)
-- [UFLD_v2 車道線偵測](https://github.com/cfzd/Ultra-Fast-Lane-Detection-v2)
-- OpenAI API 金鑰
-- [CARLA Simulator](https://carla.org/) 版本 0.9.13
-- 其他套件詳見 `requirements.txt`
-
-## 🚀 執行方式
-### 1. 啟動 CARLA 模擬器: 
-詳細安裝與設定請參考：[CARLA README](CARLA/README.md)
-
-### 2. 執行主程式：
-
-#### 🖥️ GUI 互動模式執行
+#### 🖥️ GUI Mode
 ```bash
 python gui_app.py
 ```
 
-#### ⚡ 命令列模式執行
+#### ⚡ Command Line Mode
 ```bash
 python main.py --config UFLD/configs/culane_res18.py --test_model UFLD/weights/culane_res18.pth --save_result --window_name "pygame"
 ```
 
-## 📊 實驗結果
+## 📊 Experimental Results
 
 <table>
   <tr>
